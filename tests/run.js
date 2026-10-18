@@ -1,5 +1,5 @@
 // Headless test suite. Usage: node tests/run.js   (expects `python3 -m http.server 8096` in the repo root and a fresh `python3 build.py`)
-const {chromium}=require('/workspace/runner/node_modules/playwright-core');
+const {chromium}=require(process.env.PW||'/workspace/runner/node_modules/playwright-core');
 const MOCK=require('./mock-sdks.js');
 const BASE='http://127.0.0.1:8096';
 const SDKURL={crazygames:'sdk.crazygames.com',poki:'game-cdn.poki.com',gd:'html5.api.gamedistribution.com',gamemonetize:'api.gamemonetize.com'};
