@@ -4,6 +4,7 @@
 Usage:  python3 build.py                 # all portals
         python3 build.py --only none     # one portal (used by Vercel for the preview)
 Env:    GD_GAME_ID, GM_GAME_ID           # GameDistribution / GameMonetize game ids (from their dashboards)
+        CG_LB_KEY                        # optional CrazyGames leaderboard encryption key
 """
 import os, re, shutil, sys, zipfile
 
@@ -12,6 +13,7 @@ DIST = os.path.join(ROOT, 'dist')
 PORTALS = ['none', 'gamemonetize', 'crazygames', 'poki', 'gd']
 GAME_IDS = {'gd': os.environ.get('GD_GAME_ID', 'REPLACE_WITH_GD_GAME_ID'),
             'gamemonetize': os.environ.get('GM_GAME_ID', 'REPLACE_WITH_GM_GAME_ID')}
+CG_LB_KEY = os.environ.get('CG_LB_KEY', '')           # CrazyGames leaderboard encryption key (optional, invite-only feature)
 FILES = ['three.module.min.js']
 DIRS = ['addons']
 
@@ -42,6 +44,7 @@ def build(portal, index_html):
     open(os.path.join(d, 'index.html'), 'w', encoding='utf-8').write(index_html)
     pj = open(os.path.join(ROOT, 'portal.js'), encoding='utf-8').read()
     pj = pj.replace("'__PORTAL_NAME__'", repr(portal)).replace("'__GAME_ID__'", repr(GAME_IDS.get(portal, '')))
+    pj = pj.replace("'__CG_LB_KEY__'", repr(CG_LB_KEY if portal == 'crazygames' else ''))
     open(os.path.join(d, 'portal.js'), 'w', encoding='utf-8').write(pj)
     for f in FILES:
         shutil.copy2(os.path.join(ROOT, f), d)

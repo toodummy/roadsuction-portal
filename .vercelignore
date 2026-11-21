@@ -2,3 +2,6 @@
 .vercel
 node_modules
 dist
+assets/trailer
+assets/screens
+assets/poki-pitch

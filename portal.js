@@ -6,12 +6,18 @@
  * window.LS        safe storage: CrazyGames data module -> localStorage -> in-memory fallback
  * window.PORTAL    { name, ready, loadingDone(), gameplayStart(), gameplayStop(reason),
  *                    preroll(), midgame(), rewarded() -> Promise<boolean>, hasRewarded,
+ *                    submitScore(n) -> Promise<boolean>, hasLeaderboard,
  *                    adActive, onAdStart, onAdEnd }
+ * Leaderboards: only CrazyGames has a client-side leaderboard API (SDK v3 user.submitScore, invite-only,
+ * needs the leaderboard's AES-GCM encryption key: CG_LB_KEY at build time). Poki, GameDistribution and
+ * GameMonetize have no leaderboard API, so submitScore is a no-op there and the game keeps its local top-10.
  */
 (function () {
   'use strict';
   var NAME = '__PORTAL_NAME__';             // replaced by build.py
   var GAME_ID = '__GAME_ID__';              // GameDistribution / GameMonetize game id, replaced by build.py
+  var CG_LB_KEY = '__CG_LB_KEY__';          // CrazyGames leaderboard encryption key (base64, 32 bytes), replaced by build.py
+  if (CG_LB_KEY.indexOf('__') === 0) CG_LB_KEY = '';
   if (NAME.indexOf('__') === 0) {           // dev source: allow ?portal=
     try { NAME = new URLSearchParams(location.search).get('portal') || 'none'; } catch (e) { NAME = 'none'; }
   }
@@ -92,6 +98,19 @@
     rewarded: function () { return Promise.resolve(false); }, rewardedAvailable: false
   };
 
+  // AES-GCM encrypted score, as documented at docs.crazygames.com/sdk/leaderboards-client
+  function encryptScore(score, key) {
+    var iv = crypto.getRandomValues(new Uint8Array(12)), alg = { name: 'AES-GCM', iv: iv };
+    var kb = new Uint8Array(atob(key).split('').map(function (c) { return c.charCodeAt(0); }));
+    return crypto.subtle.importKey('raw', kb, alg, false, ['encrypt']).then(function (k) {
+      return crypto.subtle.encrypt(alg, k, new TextEncoder().encode(String(score)));
+    }).then(function (buf) {
+      var all = new Uint8Array(12 + buf.byteLength); all.set(iv); all.set(new Uint8Array(buf), 12);
+      var bin = ''; for (var i = 0; i < all.length; i++) bin += String.fromCharCode(all[i]);
+      return btoa(bin);
+    });
+  }
+
   B.crazygames = {
     rewardedAvailable: true,
     sdk: function () { return window.CrazyGames && window.CrazyGames.SDK; },
@@ -124,7 +143,14 @@
       });
     },
     midgame: function () { return this._ad('midgame').then(function () {}); },
-    rewarded: function () { return this._ad('rewarded'); }
+    rewarded: function () { return this._ad('rewarded'); },
+    leaderboard: function () { var s = this.sdk(); return !!(CG_LB_KEY && s && s.user && s.user.submitScore && window.crypto && crypto.subtle); },
+    submitScore: function (score) {
+      var s = this.sdk(); if (!this.leaderboard()) return Promise.resolve(false);
+      score = Math.max(0, Math.floor(score));
+      return encryptScore(score, CG_LB_KEY).then(function (enc) { s.user.submitScore({ encryptedScore: enc, score: score }); return true; })
+        .catch(function (e) { console.warn('[portal] submitScore failed', e); return false; });
+    }
   };
 
   B.poki = {
@@ -209,7 +235,9 @@
   /* ---------- public API ---------- */
   var be = B[NAME], busy = false;
   P.ready = timeout(be.init().catch(function (e) { console.warn('[portal] init failed, continuing without SDK', e); be = B.none; }), 4000)
-    .then(function () { P.hasRewarded = !!be.rewardedAvailable && be !== B.none; });
+    .then(function () { P.hasRewarded = !!be.rewardedAvailable && be !== B.none; try { P.hasLeaderboard = !!(be.leaderboard && be.leaderboard()); } catch (e) { P.hasLeaderboard = false; } });
+  P.hasLeaderboard = false;
+  P.submitScore = function (score) { try { if (P.hasLeaderboard && be.submitScore) return be.submitScore(score); } catch (e) {} return Promise.resolve(false); };
   P.loadingDone = function () { try { be.loadingDone && be.loadingDone(); } catch (e) {} };
   P.gameplayStart = function () { if (P._playing || P.adActive) return; P._playing = true; be.start(); };
   P.gameplayStop = function (reason) { if (!P._playing || P.adActive) return; if (be.stop(reason) === false) return; P._playing = false; };
