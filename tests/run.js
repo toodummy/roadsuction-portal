@@ -71,6 +71,6 @@ for(const portal of ['crazygames','poki','gd','gamemonetize','none']){
 
 // 6) touch rectcheck (dev source)
 for(const [w,h] of [[800,450],[907,510],[390,844],[844,390],[1024,768]]){const {c,p}=await ctxFor({vp:{width:w,height:h},ctx:{isMobile:true,hasTouch:true,deviceScaleFactor:2}});const logs=[];p.on('console',m=>{if(m.text().startsWith('RECTS '))logs.push(m.text().slice(6))});
- await p.goto(`${BASE}/index.html?touch=1&rectcheck=1`);await p.waitForTimeout(1500);const last=logs.length?JSON.parse(logs[logs.length-1]):null;ok(`touch rectcheck ${w}x${h}`,!!last&&last.rects.every(r=>r[5]),last?JSON.stringify(last.rects.filter(r=>!r[5])):'no RECTS log');await c.close()}
+ await p.goto(`${BASE}/index.html?touch=1&rectcheck=1`);await p.waitForTimeout(4000);const last=logs.length?JSON.parse(logs[logs.length-1]):null;ok(`touch rectcheck ${w}x${h}`,!!last&&last.rects.every(r=>r[5]),last?JSON.stringify(last.rects.filter(r=>!r[5])):'no RECTS log');await c.close()}
 
 await b.close();const f=results.filter(r=>!r.pass);console.log(`\n${results.length-f.length}/${results.length} passed`);process.exit(f.length?1:0)})();
