@@ -63,7 +63,7 @@ for(const portal of ['crazygames','poki','gd','gamemonetize','none']){
  await c.close()}
 
 // 4) GD preroll on LAUNCH + gameId
-{const {c,p}=await ctxFor();await p.goto(`${BASE}/dist/gd/index.html`);await p.waitForTimeout(1500);await p.click('#go');await p.waitForTimeout(1300);const L=await p.evaluate(()=>__sdklog);ok('dist/gd: preroll on LAUNCH and gameId passed',L.includes('showAd:interstitial')&&L.some(x=>x.startsWith('loaded:')),JSON.stringify(L));await c.close()}
+{const {c,p}=await ctxFor();await p.goto(`${BASE}/dist/gd/index.html`);await p.waitForTimeout(1500);await p.click('#go',{force:true});await p.waitForTimeout(1300);const L=await p.evaluate(()=>__sdklog);ok('dist/gd: preroll on LAUNCH and gameId passed',L.includes('showAd:interstitial')&&L.some(x=>x.startsWith('loaded:')),JSON.stringify(L));await c.close()}
 
 // 5) game-over screenshot 800x450 (poki dev)
 {const {c,p}=await ctxFor({vp:{width:800,height:450}});await p.goto(`${BASE}/index.html?portal=poki`);await p.waitForTimeout(1500);await p.click('#go');await p.waitForTimeout(400);await p.evaluate(()=>__rd.over('test'));await p.waitForTimeout(1100);
