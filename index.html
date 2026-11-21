@@ -927,7 +927,7 @@ function evtStart(k){if(EVT.cur)return;EVT.cur={k,t:k==='meteor'?9:k==='rival'?1
  else{fxAnn('◈ CHIP STORM!','#ffd400');tone(1200,.2,'triangle',.06,1800)}}
 function evtPick(){const opts=['meteor','rival','chips','meteor','rival'];let k;do k=opts[Math.random()*opts.length|0];while(k===EVT.last&&Math.random()<.8);EVT.last=k;return k}
 function rockSpawn(sp){const cz=-dist,ahead=38+Math.random()*22,x=Math.random()<.45?Math.max(-5,Math.min(5,P.x+(Math.random()-.5)*2)):(Math.random()-.5)*10,Tl=ahead/Math.max(20,sp),y0=26;
- const m=new THREE.Group(),rk=new THREE.Mesh(rockG,rockM);m.add(rk);for(const s of[-1,1]){const e=gEye(.22);e.position.set(s*.32,.25,.72);m.add(e)}m.position.set(x,y0,cz-ahead);S.add(m);
+ if(ceilAt(cz-ahead)||ceilAt(cz-ahead-6)||ceilAt(cz-ahead+6))return;const m=new THREE.Group(),rk=new THREE.Mesh(rockG,rockM);m.add(rk);for(const s of[-1,1]){const e=gEye(.22);e.position.set(s*.32,.25,.72);m.add(e)}m.position.set(x,y0,cz-ahead);S.add(m);
  const sh=new THREE.Mesh(shadowG,new THREE.MeshBasicMaterial({color:0xffb347,transparent:true,opacity:.7,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));sh.rotation.x=-Math.PI/2;sh.position.set(x,.06,cz-ahead);S.add(sh);
  EVT.rocks.push({m,rk,sh,x,y:y0,z:cz-ahead,vy:-y0/Tl,landed:false,spin:(Math.random()-.5)*6})}
 function rivalSpawn(){const g=new THREE.Group(),lime=tM(0x9cff3a,0x3a8a10),body=cS(1,0x9cff3a,0x3a8a10,2);body.scale.set(1.05,.6,1.9);body.position.y=.85;g.add(body);
